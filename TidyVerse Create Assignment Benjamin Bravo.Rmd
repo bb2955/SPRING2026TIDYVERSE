@@ -1,0 +1,138 @@
+---
+title: "TidyVerse Create Assignment"
+author: "Benjamin Bravo"
+date: "2026-03-27"
+output: pdf_document
+---
+
+## Introduction
+
+This vignette demonstrates how to use TidyVerse packages to explore the
+`bob_ross` dataset from the `fivethirtyeight` package.
+
+The goal of this example is to show how `dplyr` and `ggplot2` can be used
+to summarize and visualize data. In this vignette, I examine which painting
+elements appear most often in Bob Ross episodes, such as trees, mountains,
+clouds, and lakes.
+
+```{r}
+install.packages("tidyverse")
+install.packages("fivethirtyeight")
+library(tidyverse)
+library(fivethirtyeight)
+```
+```{r}
+glimpse(bob_ross)
+```
+```{r}
+head(bob_ross)
+```
+```{r}
+bob_features <- bob_ross %>%
+  select(episode, title, tree, mountain, clouds, lake, river)
+
+head(bob_features)
+```
+
+```{r}
+feature_counts <- bob_ross %>%
+  summarise(
+    Trees = sum(tree, na.rm = TRUE),
+    Mountains = sum(mountain, na.rm = TRUE),
+    Clouds = sum(clouds, na.rm = TRUE),
+    Lakes = sum(lake, na.rm = TRUE),
+    Rivers = sum(river, na.rm = TRUE)
+  )
+
+feature_counts
+```
+```{r}
+feature_counts_long <- feature_counts %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = "Feature",
+    values_to = "Count"
+  )
+
+feature_counts_long
+```
+
+```{r}
+feature_counts_long <- feature_counts_long %>%
+  arrange(desc(Count))
+
+feature_counts_long
+```
+
+```{r}
+ggplot(feature_counts_long, aes(x = reorder(Feature, Count), y = Count)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Common Features in Bob Ross Paintings",
+    x = "Feature",
+    y = "Number of Paintings"
+  )
+```
+
+```{r}
+trees_and_mountains <- bob_ross %>%
+  filter(tree == 1, mountain == 1) %>%
+  select(episode, title, tree, mountain)
+
+head(trees_and_mountains)
+```
+
+```{r}
+bob_water <- bob_ross %>%
+  mutate(
+    water_scene = if_else(lake == 1 | river == 1, "Has Water", "No Water")
+  ) %>%
+  count(water_scene)
+
+bob_water
+```
+
+```{r}
+ggplot(bob_water, aes(x = water_scene, y = n)) +
+  geom_col() +
+  labs(
+    title = "Bob Ross Paintings With and Without Water",
+    x = "Scene Type",
+    y = "Number of Episodes"
+  )
+```
+
+## Code Explanations
+
+I first installed and loaded the tidyverse and fivethirtyeight packages so I could access the Bob Ross dataset and use data analysis tools.
+
+I used glimpse(bob_ross) to quickly view the structure of the dataset, including the number of rows, columns, and variable types. This helps understand what kind of data is available before starting the analysis.
+
+I used head(bob_ross) to display the first few rows of the dataset. This allowed me to preview how the data is organized and see example values for each column.
+
+I used select() to create a smaller dataset called bob_features that only kept the columns needed for this analysis, such as episode title, trees, mountains, clouds, lakes, and rivers. This makes the dataset easier to work with by removing unnecessary variables.
+
+I used summarise() to calculate how many times important features like trees, mountains, clouds, lakes, and rivers appear across all Bob Ross episodes. This gives a quick summary of the most common painting elements.
+
+I used pivot_longer() to reshape the summary table from wide format into long format. This made it easier to create charts using ggplot2 because each feature and count became its own row.
+
+I used arrange(desc(Count)) to sort the features from highest count to lowest count. This makes it easier to identify the most common features in the paintings.
+
+I used ggplot() with geom_col() to create a bar chart showing how often each feature appears. The chart helps visually compare which painting elements were used the most.
+
+I used filter(tree == 1, mountain == 1) to find episodes that contained both trees and mountains. This shows how filtering can be used to locate specific combinations of features in the dataset.
+
+I used mutate() with if_else() to create a new variable called water_scene. This variable labels each episode as either having water or not having water based on whether a lake or river appears.
+
+I then used count() to total how many episodes had water scenes versus no water scenes. This gives a simple comparison between the two groups.
+
+Finally, I used ggplot() again to create a bar chart showing the number of Bob Ross paintings with water and without water. This visualization makes the comparison easier to understand.
+
+## Conclusion
+
+In this vignette, I used the bob_ross dataset to show how TidyVerse tools can help explore and understand data in a simple way. I used functions like select(), summarise(), pivot_longer(), filter(), and mutate() to clean and organize the data. I also used ggplot2 to create visualizations that make the results easier to understand.
+
+From the analysis, we can see that some features, like trees and clouds, appear more often in Bob Ross paintings than others. I also found that many paintings include natural elements like water (lakes or rivers), which reflects the style of his artwork.
+
+Overall, this example shows how the TidyVerse makes it easy to go from raw data to useful insights. Even with a fun dataset like Bob Ross paintings, we can practice important data skills like summarizing, transforming, and visualizing data. These same steps can be applied to more serious datasets in real-world data analysis.
